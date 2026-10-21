@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 -100 200 200" width="200" height="200">
+  
+  <!-- rotating track ring -->
+  <circle cx="0" cy="0" r="80" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="3"
+          stroke-dasharray="10 16" stroke-linecap="round" opacity=".55">
+    <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <!-- S: top arc draws in -->
+  <path d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"
+        stroke-dasharray="320" stroke-dashoffset="320">
+    <animate attributeName="stroke-dashoffset" values="320;0;0;-320;-320" keyTimes="0;0.25;0.7;0.95;1" dur="2.6s" repeatCount="indefinite"/>
+  </path>
+  <!-- S: bottom arc, phase-shifted -->
+  <path d="M -42 52 A 52 52 0 0 0 42 52" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"
+        stroke-dasharray="320" stroke-dashoffset="320">
+    <animate attributeName="stroke-dashoffset" values="320;0;0;-320;-320" keyTimes="0;0.25;0.7;0.95;1" dur="2.6s" begin="-0.35s" repeatCount="indefinite"/>
+  </path>
+  <!-- white notch cut -->
+  <rect x="-26" y="-9" width="52" height="18" rx="9" fill="#6C7A89" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.3;0.37;0.66;0.73;1" dur="2.6s" repeatCount="indefinite"/>
+  </rect>
+  <!-- glint sweep -->
+  <path d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" opacity="0">
+    <animate attributeName="opacity" values="0;0;0.9;0;0" keyTimes="0;0.36;0.5;0.64;1" dur="2.6s" repeatCount="indefinite"/>
+  </path>
+</svg>

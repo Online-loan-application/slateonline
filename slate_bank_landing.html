@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slate Bank — Banking in its truest form</title>
+<style>
+  @property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+  :root{
+    --slate:#6C7A89; --slate-dark:#4E5A68; --slate-deep:#333D48;
+    --slate-light:#A7B3C2; --mist:#F4F6F8; --ink:#2E3742;
+    --glass:rgba(255,255,255,.55); --glass-brd:rgba(255,255,255,.65);
+    --glass-dark:rgba(255,255,255,.08); --glass-dark-brd:rgba(255,255,255,.16);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:var(--ink);overflow-x:hidden;background:#E9EDF2}
+
+  /* ambient background wash */
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(700px 500px at 85% -5%, rgba(108,122,137,.28), transparent 60%),
+      radial-gradient(600px 500px at -10% 30%, rgba(167,179,194,.35), transparent 60%),
+      linear-gradient(180deg,#F4F6F8,#E4E9EF);
+  }
+
+  /* splash — the logo IS the loader */
+  .logo-loader{width:min(400px,84vw);height:auto;display:block}
+
+  /* page-transition loader */
+  #ptransition{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+    background:linear-gradient(135deg,#8A99AB,#6C7A89 55%,#4E5A68);opacity:0;visibility:hidden;transition:opacity .45s ease,visibility .45s}
+  #ptransition.show{opacity:1;visibility:visible}
+  #ptransition .pt-stage{display:flex;align-items:center;justify-content:center}
+  #ptransition .logo-loader{width:270px;height:auto}
+  #ptransition span{color:rgba(255,255,255,.85);font-size:13px;letter-spacing:5px;font-weight:600}
+
+  /* fade utilities */
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+  .d1{transition-delay:.1s}.d2{transition-delay:.25s}.d3{transition-delay:.4s}.d4{transition-delay:.55s}.d5{transition-delay:.7s}
+
+  /* glass */
+  .glass{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border:1px solid var(--glass-brd);border-radius:24px;
+    box-shadow:0 8px 32px rgba(78,90,104,.14), inset 0 1px 0 rgba(255,255,255,.8)}
+  .glow-card{position:relative;overflow:hidden}
+  .glow-card>*{position:relative;z-index:1}
+  .glow-card::before{content:"";position:absolute;inset:0;border-radius:inherit;opacity:0;transition:opacity .4s;z-index:0;
+    background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%), rgba(108,122,137,.18), transparent 65%)}
+  .glow-card:hover::before{opacity:1}
+
+  /* floating blobs + chips */
+  .blob{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none;animation:drift 16s ease-in-out infinite alternate}
+  @keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(50px,-40px) scale(1.15)}}
+  .float-chip{position:absolute;display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:100px;
+    background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(14px);
+    font-size:12.5px;font-weight:600;color:var(--slate-dark);box-shadow:0 10px 30px rgba(78,90,104,.18);
+    animation:floaty 5s ease-in-out infinite}
+  .float-chip i{width:8px;height:8px;border-radius:50%}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+  /* nav */
+  nav{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:50;width:min(1180px,92vw);
+    display:flex;align-items:center;justify-content:space-between;padding:14px 26px;border-radius:100px;
+    background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border:1px solid var(--glass-brd);box-shadow:0 8px 32px rgba(78,90,104,.14);
+    opacity:0;transition:opacity 1s ease .2s}
+  nav.show{opacity:1}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:3px;font-size:17px;color:var(--slate-deep);text-decoration:none}
+  .brand svg{width:28px;height:28px}
+  .nav-links{display:flex;gap:30px;list-style:none}
+  .nav-links a{color:var(--slate-dark);text-decoration:none;font-size:14px;letter-spacing:.5px;transition:color .3s}
+  .nav-links a:hover{color:var(--slate)}
+  .btn{display:inline-block;border:none;cursor:pointer;font-family:inherit;text-decoration:none;text-align:center;
+    padding:13px 30px;border-radius:100px;font-size:15px;font-weight:600;letter-spacing:.5px;
+    transition:transform .3s, box-shadow .3s, background .3s}
+  .btn-primary{background:var(--slate);color:#fff;box-shadow:0 8px 24px rgba(108,122,137,.35)}
+  .btn-primary:hover{background:var(--slate-dark);transform:translateY(-3px);box-shadow:0 14px 32px rgba(108,122,137,.45)}
+  .btn-ghost{background:var(--glass);color:var(--slate-dark);border:1px solid var(--glass-brd);backdrop-filter:blur(12px)}
+  .btn-ghost:hover{background:rgba(255,255,255,.85);transform:translateY(-3px)}
+  .btn-sm{padding:11px 24px;font-size:14px}
+
+  /* hero */
+  .hero{min-height:100vh;display:flex;align-items:center;padding:150px 6vw 90px;position:relative;overflow:hidden}
+  .hero-inner{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.05fr .95fr;gap:60px;align-items:center;position:relative;z-index:1}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:100px;
+    background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(12px);
+    color:var(--slate-dark);font-size:12px;font-weight:700;letter-spacing:3px;margin-bottom:28px}
+  .eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--slate);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(108,122,137,.5)}50%{box-shadow:0 0 0 7px rgba(108,122,137,0)}}
+  h1{font-size:clamp(40px,5.2vw,68px);line-height:1.08;font-weight:800;letter-spacing:-1.5px;color:var(--slate-deep)}
+  h1 em{font-style:normal;background:linear-gradient(120deg,var(--slate),var(--slate-light),var(--slate));background-size:200% auto;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:gradSlide 5s linear infinite}
+  @keyframes gradSlide{to{background-position:200% center}}
+  .hero p{margin:26px 0 38px;font-size:18px;line-height:1.7;color:var(--slate-dark);max-width:480px}
+  .hero-cta{display:flex;gap:16px;flex-wrap:wrap}
+
+  .hero-card{padding:34px;transform:rotate(1.5deg);transition:transform .5s;position:relative}
+  .hero-card:hover{transform:rotate(0deg) translateY(-6px)}
+  .hero-card .card-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+  .hero-card h3{font-size:13px;letter-spacing:2px;color:var(--slate);font-weight:700}
+  .balance{font-size:40px;font-weight:800;color:var(--slate-deep);letter-spacing:-1px}
+  .balance-label{font-size:13px;color:var(--slate);margin-top:4px}
+  .spark{display:flex;align-items:flex-end;gap:8px;height:90px;margin-top:28px}
+  .spark span{flex:1;background:linear-gradient(180deg,var(--slate-light),var(--slate));border-radius:6px 6px 3px 3px;transform-origin:bottom;animation:barGrow 1.2s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes barGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  .trend{margin-top:22px;display:inline-flex;align-items:center;gap:8px;background:rgba(108,122,137,.12);color:var(--slate-dark);padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600}
+  .glass-chips{display:flex;gap:12px;margin-top:24px}
+  .chip{flex:1;padding:14px 16px;border-radius:16px;background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(10px);text-align:center}
+  .chip b{display:block;font-size:17px;color:var(--slate-deep)}
+  .chip span{font-size:11.5px;color:var(--slate);letter-spacing:.5px}
+
+  /* marquee */
+  .marquee{overflow:hidden;padding:26px 0;border-top:1px solid rgba(108,122,137,.14);border-bottom:1px solid rgba(108,122,137,.14);
+    background:rgba(255,255,255,.4);backdrop-filter:blur(8px)}
+  .marquee-track{display:flex;gap:70px;width:max-content;animation:scrollX 26s linear infinite;white-space:nowrap}
+  .marquee span{font-size:15px;font-weight:700;letter-spacing:4px;color:var(--slate-light);display:flex;align-items:center;gap:70px}
+  .marquee span::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--slate-light);opacity:.5}
+  @keyframes scrollX{to{transform:translateX(-50%)}}
+
+  /* dark strip */
+  .strip{background:linear-gradient(135deg,var(--slate-deep),#2A323B);padding:64px 6vw;position:relative;overflow:hidden}
+  .strip::before{content:"";position:absolute;top:-100px;left:20%;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.05)}
+  .strip-inner{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:22px;position:relative}
+  .stat{padding:26px;border-radius:20px;background:var(--glass-dark);border:1px solid var(--glass-dark-brd);backdrop-filter:blur(14px);text-align:center}
+  .stat b{display:block;color:#fff;font-size:32px;letter-spacing:-.5px}
+  .stat span{color:var(--slate-light);font-size:12.5px;letter-spacing:2px}
+
+  /* sections */
+  .section{padding:110px 6vw;position:relative}
+  .section-head{max-width:680px;margin:0 auto 70px;text-align:center;position:relative;z-index:1}
+  .section-head h2{font-size:clamp(30px,3.6vw,44px);font-weight:800;letter-spacing:-.5px;color:var(--slate-deep)}
+  .section-head p{margin-top:16px;color:var(--slate);font-size:17px;line-height:1.7}
+
+  /* steps */
+  .steps{max-width:1100px;margin:0 auto;position:relative}
+  .step-line{position:absolute;top:44px;left:12%;right:12%;height:2px;background:rgba(108,122,137,.18);border-radius:2px;overflow:hidden}
+  .step-line i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--slate-light),var(--slate));transition:width 1.6s cubic-bezier(.2,.7,.2,1) .3s}
+  .steps.visible .step-line i{width:100%}
+  .step-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;position:relative}
+  .step{padding:38px 32px;text-align:center}
+  .step-num{width:56px;height:56px;margin:0 auto 22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--slate-light),var(--slate));color:#fff;font-weight:800;font-size:19px;
+    box-shadow:0 10px 24px rgba(108,122,137,.4)}
+  .step h3{font-size:19px;font-weight:700;color:var(--slate-deep);margin-bottom:12px}
+  .step p{font-size:14.5px;line-height:1.7;color:var(--slate)}
+
+  /* feature cards */
+  .cards{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+  .card{padding:40px 34px;transition:transform .45s, box-shadow .45s}
+  .card:hover{transform:translateY(-10px);box-shadow:0 26px 60px rgba(78,90,104,.22)}
+  .icon{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,var(--slate-light),var(--slate));
+    display:flex;align-items:center;justify-content:center;margin-bottom:26px;transition:transform .45s;
+    box-shadow:0 8px 20px rgba(108,122,137,.35)}
+  .card:hover .icon{transform:rotate(-8deg) scale(1.08)}
+  .icon svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .card h3{font-size:20px;font-weight:700;color:var(--slate-deep);margin-bottom:12px}
+  .card p{font-size:15px;line-height:1.7;color:var(--slate)}
+  .card .more{display:inline-flex;align-items:center;gap:6px;margin-top:22px;color:var(--slate-dark);font-weight:600;font-size:14px;text-decoration:none}
+  .card .more:hover{color:var(--slate)}
+
+  /* pricing */
+  .pricing{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:26px;align-items:stretch}
+  .price{padding:42px 36px;display:flex;flex-direction:column;transition:transform .45s, box-shadow .45s}
+  .price:hover{transform:perspective(900px) rotateX(3deg) rotateY(-3deg) translateY(-8px);box-shadow:0 30px 70px rgba(78,90,104,.25)}
+  .price h3{font-size:15px;letter-spacing:3px;color:var(--slate);font-weight:700}
+  .amount{margin:18px 0 6px;font-size:46px;font-weight:800;letter-spacing:-1.5px;color:var(--slate-deep)}
+  .amount small{font-size:15px;font-weight:600;color:var(--slate-light);letter-spacing:0}
+  .per{font-size:13.5px;color:var(--slate);margin-bottom:28px}
+  .perks{list-style:none;flex:1}
+  .perks li{display:flex;gap:12px;align-items:flex-start;font-size:14.5px;color:var(--slate-dark);margin-bottom:15px;line-height:1.55}
+  .perks li svg{flex:none;width:18px;height:18px;stroke:var(--slate);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;margin-top:2px}
+  .price .btn{margin-top:30px}
+  .featured{background:linear-gradient(rgba(255,255,255,.78),rgba(255,255,255,.78)) padding-box,
+    conic-gradient(from var(--ang), #6C7A89, #C4CDD8, #4E5A68, #6C7A89) border-box;
+    border:2px solid transparent;animation:spinBorder 5s linear infinite}
+  @keyframes spinBorder{to{--ang:360deg}}
+  .tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);padding:6px 18px;border-radius:100px;
+    background:linear-gradient(135deg,var(--slate),var(--slate-dark));color:#fff;font-size:11px;font-weight:700;letter-spacing:2.5px;
+    box-shadow:0 8px 20px rgba(108,122,137,.45)}
+
+  /* security */
+  .security{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+  .security h2{font-size:clamp(28px,3.2vw,40px);font-weight:800;letter-spacing:-.5px;color:var(--slate-deep);line-height:1.15}
+  .security .lead{margin:20px 0 34px;color:var(--slate);font-size:17px;line-height:1.7;max-width:440px}
+  .sec-list{list-style:none}
+  .sec-list li{display:flex;gap:14px;margin-bottom:20px;align-items:flex-start}
+  .sec-list .ck{flex:none;width:26px;height:26px;border-radius:50%;background:rgba(108,122,137,.14);display:flex;align-items:center;justify-content:center}
+  .sec-list .ck svg{width:13px;height:13px;stroke:var(--slate-dark);fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+  .sec-list b{display:block;font-size:15.5px;color:var(--slate-deep)}
+  .sec-list span{font-size:14px;color:var(--slate)}
+  .sec-card{padding:36px}
+  .sec-card h3{font-size:13px;letter-spacing:2.5px;color:var(--slate);font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+  .sec-card h3 i{width:9px;height:9px;border-radius:50%;background:#5E9C7B;animation:pulseGreen 2s infinite}
+  @keyframes pulseGreen{0%,100%{box-shadow:0 0 0 0 rgba(94,156,123,.5)}50%{box-shadow:0 0 0 8px rgba(94,156,123,0)}}
+  .sec-row{display:flex;justify-content:space-between;align-items:center;padding:15px 4px;border-bottom:1px solid rgba(108,122,137,.14);font-size:14.5px;color:var(--slate-dark)}
+  .sec-row:last-child{border-bottom:none}
+  .status{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:1.5px;color:#5E9C7B}
+  .status i{width:7px;height:7px;border-radius:50%;background:#5E9C7B}
+
+  /* quotes */
+  .quotes{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+  .quote{padding:34px}
+  .quote .stars{color:#E8B44C;letter-spacing:3px;font-size:15px;margin-bottom:16px}
+  .quote p{font-size:15.5px;line-height:1.7;color:var(--slate-dark)}
+  .quote .who{display:flex;align-items:center;gap:14px;margin-top:24px}
+  .avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--slate-light),var(--slate-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px}
+  .who b{display:block;font-size:14.5px;color:var(--slate-deep)}
+  .who span{font-size:12.5px;color:var(--slate)}
+
+  /* cta */
+  .cta-wrap{padding:40px 6vw 110px;position:relative;overflow:hidden}
+  .cta{max-width:1100px;margin:0 auto;padding:90px 8vw;text-align:center;position:relative;overflow:hidden;
+    background:linear-gradient(135deg,rgba(138,153,171,.85),rgba(108,122,137,.9) 55%,rgba(78,90,104,.92));
+    backdrop-filter:blur(20px);border-radius:32px;border:1px solid rgba(255,255,255,.35);box-shadow:0 30px 80px rgba(78,90,104,.35)}
+  .cta::before{content:"";position:absolute;top:-120px;right:-120px;width:340px;height:340px;border-radius:50%;background:rgba(255,255,255,.12);animation:drift 12s ease-in-out infinite alternate}
+  .cta::after{content:"";position:absolute;bottom:-140px;left:-100px;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.08);animation:drift 14s ease-in-out infinite alternate-reverse}
+  .cta h2{color:#fff;font-size:clamp(30px,3.8vw,46px);font-weight:800;letter-spacing:-.5px;position:relative}
+  .cta p{color:rgba(255,255,255,.88);margin:20px auto 40px;max-width:520px;font-size:17px;line-height:1.7;position:relative}
+  .cta .btn{position:relative;background:#fff;color:var(--slate-dark);box-shadow:0 12px 30px rgba(0,0,0,.15)}
+  .cta .btn:hover{transform:translateY(-3px);background:var(--mist)}
+
+  /* footer */
+  footer{background:linear-gradient(180deg,var(--slate-deep),#262D36);padding:84px 6vw 0}
+  .footer-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.7fr 1fr 1fr 1fr 1.5fr;gap:48px;padding-bottom:70px}
+  .foot-brand p{color:var(--slate-light);font-size:14px;line-height:1.75;max-width:260px;margin-top:18px}
+  .foot-brand .brand{color:#fff}
+  .socials{display:flex;gap:12px;margin-top:26px}
+  .socials a{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    background:var(--glass-dark);border:1px solid var(--glass-dark-brd);backdrop-filter:blur(8px);transition:all .3s}
+  .socials a:hover{background:var(--slate);border-color:var(--slate);transform:translateY(-3px)}
+  .socials svg{width:16px;height:16px;fill:none;stroke:var(--slate-light);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .socials a:hover svg{stroke:#fff}
+  .foot-col h4, .foot-news h4{color:#fff;font-size:12px;letter-spacing:2.5px;font-weight:700;margin-bottom:24px}
+  .foot-col ul{list-style:none}
+  .foot-col li{margin-bottom:14px}
+  .foot-col a{color:var(--slate-light);text-decoration:none;font-size:14px;transition:color .3s,padding-left .3s}
+  .foot-col a:hover{color:#fff;padding-left:6px}
+  .foot-news p{color:var(--slate-light);font-size:13.5px;line-height:1.65;margin-bottom:20px}
+  .news-form{display:flex;background:var(--glass-dark);border:1px solid var(--glass-dark-brd);border-radius:100px;padding:5px;backdrop-filter:blur(8px)}
+  .news-form input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:inherit;font-size:14px;padding:10px 18px;min-width:0}
+  .news-form input::placeholder{color:rgba(255,255,255,.38)}
+  .news-form button{border:none;background:var(--slate);color:#fff;border-radius:100px;padding:10px 22px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:background .3s;white-space:nowrap}
+  .news-form button:hover{background:var(--slate-light)}
+  .footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding:28px 0;margin-top:8px}
+  .footer-bottom-inner{max-width:1180px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+  .footer-bottom small{color:rgba(255,255,255,.38);font-size:12.5px;letter-spacing:.4px}
+  .legal{display:flex;gap:26px;list-style:none}
+  .legal a{color:rgba(255,255,255,.55);text-decoration:none;font-size:13px;transition:color .3s}
+  .legal a:hover{color:#fff}
+
+  @media (max-width:900px){
+    .hero-inner,.security{grid-template-columns:1fr}
+    .cards,.quotes,.pricing,.step-grid{grid-template-columns:1fr}
+    .strip-inner{grid-template-columns:repeat(2,1fr)}
+    .nav-links{display:none}
+    .step-line{display:none}
+    .footer-grid{grid-template-columns:1fr 1fr;gap:40px}
+  }
+  @media (max-width:560px){
+    .footer-grid{grid-template-columns:1fr}
+    .footer-bottom-inner{flex-direction:column;text-align:center}
+  }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<template id="loader-tpl">
+<svg class="logo-loader" xmlns="http://www.w3.org/2000/svg" viewBox="146 101 608 333">
+  <defs>
+    <linearGradient id="slateGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8A99AB"/>
+      <stop offset="0.55" stop-color="#6C7A89"/>
+      <stop offset="1" stop-color="#4E5A68"/>
+    </linearGradient>
+    <linearGradient id="slateGradLight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A7B3C2"/>
+      <stop offset="1" stop-color="#6C7A89"/>
+    </linearGradient>
+    <style>
+      @keyframes drawStroke { from { stroke-dashoffset: 330; } to { stroke-dashoffset: 0; } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { 0% { opacity: 0; transform: scale(.7); } 60% { opacity: 1; transform: scale(1.07); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes lockIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes shimmer { 0%,100% { opacity: .2; } 50% { opacity: .85; } }
+
+    #logo-lockup { animation: lockIn .5s ease .05s both; }
+    #slate-s-top, #slate-s-bottom {
+      stroke-dasharray: 330; stroke-dashoffset: 330;
+      animation: drawStroke 1.25s cubic-bezier(.45,.05,.35,1) forwards;
+    }
+    #slate-s-top   { animation-delay: .15s; }
+    #slate-s-bottom{ animation-delay: .55s; }
+    #slate-notch  { opacity: 0; transform-box: fill-box; transform-origin: center;
+      animation: popIn .55s cubic-bezier(.2,.7,.3,1.2) 1.05s forwards; }
+    #wordmark text, #tagline { opacity: 0; animation: fadeUp .7s cubic-bezier(.2,.7,.2,1) both; }
+    #wordmark .l1 { animation-delay: 1.20s; } #wordmark .l2 { animation-delay: 1.26s; }
+    #wordmark .l3 { animation-delay: 1.32s; } #wordmark .l4 { animation-delay: 1.38s; }
+    #wordmark .l5 { animation-delay: 1.44s; } #wordmark .l6 { animation-delay: 1.50s; }
+    #wordmark .l7 { animation-delay: 1.56s; } #wordmark .l8 { animation-delay: 1.62s; }
+    #wordmark .l9 { animation-delay: 1.68s; } #wordmark .l10{ animation-delay: 1.74s; }
+    #tagline { animation-delay: 1.92s; }
+    #slate-glint { animation: shimmer 3s ease-in-out 2.3s infinite; }
+    </style>
+  </defs>
+
+
+  <!-- ================= PRIMARY LOCKUP ================= -->
+  <g id="logo-lockup" transform="translate(450,190)">
+    <g id="mark">
+      <!-- S formed from two rounded strokes, plus a white notch cut -->
+      <path id="slate-s-top" d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"/>
+      <path id="slate-s-bottom" d="M -42 52 A 52 52 0 0 0 42 52" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"/>
+      <rect id="slate-notch" x="-26" y="-9" width="52" height="18" rx="9" fill="#6C7A89"/>
+      <path id="slate-glint" d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".35"/>
+    </g>
+  </g>
+
+  <g id="wordmark" transform="translate(450,368)" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="60" letter-spacing="12" fill="#FFFFFF">
+    <text class="l1" x="-260" y="0">S</text>
+    <text class="l2" x="-198" y="0">L</text>
+    <text class="l3" x="-142"  y="0">A</text>
+    <text class="l4" x="-80"  y="0">T</text>
+    <text class="l5" x="-20"   y="0">E</text>
+    <text class="l6" x="76"  y="0" fill="#C4CDD8">B</text>
+    <text class="l7" x="132"  y="0" fill="#C4CDD8">A</text>
+    <text class="l8" x="194"  y="0" fill="#C4CDD8">N</text>
+    <text class="l9" x="256"  y="0" fill="#C4CDD8">K</text>
+  </g>
+
+  <text id="tagline" x="450" y="418" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="18" letter-spacing="7" fill="rgba(255,255,255,.75)">BANKING IN ITS TRUEST FORM</text>
+
+
+</svg>
+</template>
+<div id="ptransition"><div class="pt-stage"></div><span>LOADING</span></div>
+
+<nav id="nav">
+  <a class="brand" href="#">
+    <svg viewBox="-90 -90 180 180">
+      <path d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#6C7A89" stroke-width="40" stroke-linecap="round"/>
+      <path d="M -42 52 A 52 52 0 0 0 42 52" fill="none" stroke="#6C7A89" stroke-width="40" stroke-linecap="round"/>
+      <rect x="-26" y="-9" width="52" height="18" rx="9" fill="#F4F6F8"/>
+    </svg>
+    SLATE BANK
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#accounts">Accounts</a></li>
+    <li><a href="#reviews">Reviews</a></li>
+    <li><a href="slate_bank_auth.html">Sign In</a></li>
+  </ul>
+  <a class="btn btn-primary" href="slate_bank_auth.html">Open Account</a>
+</nav>
+
+<header class="hero">
+  <div class="blob" style="width:420px;height:420px;top:-80px;right:-60px;background:rgba(138,153,171,.5)"></div>
+  <div class="blob" style="width:320px;height:320px;bottom:-40px;left:-80px;background:rgba(167,179,194,.55);animation-delay:-8s"></div>
+  <div class="hero-inner">
+    <div>
+      <span class="eyebrow reveal"><i></i>DIGITAL BANKING · REIMAGINED</span>
+      <h1 class="reveal d1">Banking in its<br><em>truest form.</em></h1>
+      <p class="reveal d2">No branches. No queues. No fine print in grey. Slate Bank is a fully digital account built on one honest color and one honest promise — your money, clearly managed.</p>
+      <div class="hero-cta reveal d3">
+        <a class="btn btn-primary" href="slate_bank_auth.html">Get Started Free</a>
+        <a class="btn btn-ghost" href="#how">See How It Works</a>
+      </div>
+    </div>
+    <div style="position:relative">
+      <div class="glass glow-card hero-card reveal d4">
+        <div class="card-row">
+          <h3>TOTAL BALANCE</h3>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#6C7A89" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/></svg>
+        </div>
+        <div class="balance" id="counter">$0.00</div>
+        <div class="balance-label">Slate Everyday Account ····4821</div>
+        <div class="spark">
+          <span style="height:35%;animation-delay:.9s"></span>
+          <span style="height:55%;animation-delay:1.0s"></span>
+          <span style="height:42%;animation-delay:1.1s"></span>
+          <span style="height:70%;animation-delay:1.2s"></span>
+          <span style="height:58%;animation-delay:1.3s"></span>
+          <span style="height:85%;animation-delay:1.4s"></span>
+          <span style="height:100%;animation-delay:1.5s"></span>
+        </div>
+        <div class="trend">&#9650; +8.2% this month</div>
+        <div class="glass-chips">
+          <div class="chip"><b>4.1%</b><span>SAVINGS APY</span></div>
+          <div class="chip"><b>$0</b><span>MONTHLY FEE</span></div>
+          <div class="chip"><b>Instant</b><span>TRANSFERS</span></div>
+        </div>
+      </div>
+      <div class="float-chip" style="top:-24px;right:-14px"><i style="background:#5E9C7B"></i>Transfer received · $2,400</div>
+      <div class="float-chip" style="bottom:34px;left:-30px;animation-delay:-2.5s"><i style="background:#6C7A89"></i>Card ····6012 frozen in 1 tap</div>
+    </div>
+  </div>
+</header>
+
+<div class="marquee">
+  <div class="marquee-track">
+    <span>VISA</span><span>MASTERCARD</span><span>APPLE PAY</span><span>GOOGLE PAY</span><span>SAMSUNG PAY</span><span>FIDO2 CERTIFIED</span>
+    <span>VISA</span><span>MASTERCARD</span><span>APPLE PAY</span><span>GOOGLE PAY</span><span>SAMSUNG PAY</span><span>FIDO2 CERTIFIED</span>
+  </div>
+</div>
+
+<div class="strip">
+  <div class="strip-inner">
+    <div class="stat reveal"><b>250K+</b><span>ACCOUNTS OPENED</span></div>
+    <div class="stat reveal d1"><b>4.9&#9733;</b><span>APP STORE RATING</span></div>
+    <div class="stat reveal d2"><b>0</b><span>HIDDEN FEES EVER</span></div>
+    <div class="stat reveal d3"><b>24/7</b><span>HUMAN SUPPORT</span></div>
+  </div>
+</div>
+
+<section class="section steps reveal" id="how">
+  <div class="section-head">
+    <h2>Up and running in three steps.</h2>
+    <p>From download to first payment in under five minutes.</p>
+  </div>
+  <div class="step-grid">
+    <div class="step-line"><i></i></div>
+    <div class="glass glow-card step">
+      <div class="step-num">1</div>
+      <h3>Open your account</h3>
+      <p>Four minutes, an ID, and a selfie. No paperwork, no branch visit, no waiting list.</p>
+    </div>
+    <div class="glass glow-card step d1">
+      <div class="step-num">2</div>
+      <h3>Fund it instantly</h3>
+      <p>Move money from any bank, debit card, or Apple &amp; Google Pay — it lands in seconds.</p>
+    </div>
+    <div class="glass glow-card step d2">
+      <div class="step-num">3</div>
+      <h3>Make it yours</h3>
+      <p>Smart pots, round-ups, virtual cards for subscriptions — set it up once, it runs itself.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features" style="padding-top:30px">
+  <div class="section-head reveal">
+    <h2>Everything you need.<br>Nothing you don't.</h2>
+    <p>Three core pillars on one slate-solid foundation.</p>
+  </div>
+  <div class="cards">
+    <div class="glass glow-card card reveal">
+      <div class="icon"><svg viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg></div>
+      <h3>Instant Everything</h3>
+      <p>Open an account in four minutes. Transfers land in seconds. Your virtual card is in your wallet app before the plastic ships.</p>
+      <a class="more" href="#">Learn more &rarr;</a>
+    </div>
+    <div class="glass glow-card card reveal d1">
+      <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+      <h3>Serious Security</h3>
+      <p>Biometric login, real-time fraud alerts, and instant card freeze from your phone. Your money sleeps behind bank-grade encryption.</p>
+      <a class="more" href="#">Learn more &rarr;</a>
+    </div>
+    <div class="glass glow-card card reveal d2">
+      <div class="icon"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></div>
+      <h3>Money That Grows</h3>
+      <p>Round-ups, smart pots, and interest that compounds daily. Watch your balance climb — like the bars on this very page.</p>
+      <a class="more" href="#">Learn more &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="accounts" style="padding-top:30px">
+  <div class="section-head reveal">
+    <h2>One bank. Three ways in.</h2>
+    <p>Start free. Upgrade when life does.</p>
+  </div>
+  <div class="pricing">
+    <div class="glass glow-card price reveal">
+      <h3>EVERYDAY</h3>
+      <div class="amount">$0<small>/mo</small></div>
+      <div class="per">The essentials, done beautifully.</div>
+      <ul class="perks">
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>Everyday account &amp; virtual card</li>
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>Free instant transfers</li>
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>1 smart savings pot</li>
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>Standard support</li>
+      </ul>
+      <a class="btn btn-ghost" href="slate_bank_auth.html">Open Everyday</a>
+    </div>
+    <div class="glass glow-card price featured reveal d1" style="position:relative">
+      <span class="tag">MOST POPULAR</span>
+      <h3>PLUS</h3>
+      <div class="amount">$6<small>/mo</small></div>
+      <div class="per">For people whose money is moving.</div>
+      <ul class="perks">
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>Everything in Everyday</li>
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>4.1% APY on savings</li>
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>10 smart pots &amp; auto round-ups</li>
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>Fee-free global withdrawals</li>
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>Priority human support</li>
+      </ul>
+      <a class="btn btn-primary" href="slate_bank_auth.html">Open Plus</a>
+    </div>
+    <div class="glass glow-card price reveal d2">
+      <h3>PRIVATE</h3>
+      <div class="amount">$15<small>/mo</small></div>
+      <div class="per">White-glove, without the white gloves.</div>
+      <ul class="perks">
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>Everything in Plus</li>
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>Dedicated private banker</li>
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>Metal card, 4 family seats</li>
+        <li><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>Higher limits &amp; concierge</li>
+      </ul>
+      <a class="btn btn-ghost" href="slate_bank_auth.html">Open Private</a>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:30px">
+  <div class="security">
+    <div class="reveal">
+      <h2>Fort Knox manners.<br>Open-book attitude.</h2>
+      <p class="lead">Your money is locked down with bank-grade infrastructure — while every fee, rate, and policy stays visible in plain sight.</p>
+      <ul class="sec-list">
+        <li><span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg></span><div><b>AES-256 encryption, end to end</b><span>Every byte, in transit and at rest.</span></div></li>
+        <li><span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg></span><div><b>Real-time fraud sentinels</b><span>Models watching every transaction, 24/7.</span></div></li>
+        <li><span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg></span><div><b>Biometric everything</b><span>Face, fingerprint, or hardware key — your call.</span></div></li>
+        <li><span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg></span><div><b>Insured deposits</b><span>Full coverage up to regulatory limits.</span></div></li>
+      </ul>
+    </div>
+    <div class="glass glow-card sec-card reveal d2">
+      <h3>SECURITY STATUS <i></i></h3>
+      <div class="sec-row"><span>End-to-end encryption</span><span class="status"><i></i>ACTIVE</span></div>
+      <div class="sec-row"><span>Fraud monitoring</span><span class="status"><i></i>24/7</span></div>
+      <div class="sec-row"><span>Biometric login</span><span class="status"><i></i>ENABLED</span></div>
+      <div class="sec-row"><span>Deposit insurance</span><span class="status"><i></i>PROTECTED</span></div>
+      <div class="sec-row"><span>Card freeze control</span><span class="status"><i></i>INSTANT</span></div>
+      <div class="sec-row"><span>Open-source audits</span><span class="status"><i></i>PUBLISHED</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="reviews" style="padding-top:20px">
+  <div class="section-head reveal">
+    <h2>Loved by people who<br>read the fine print.</h2>
+  </div>
+  <div class="quotes">
+    <div class="glass glow-card quote reveal">
+      <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <p>"I switched from a high-street bank in one evening. The interest hit my savings pot the same night. I've never looked back."</p>
+      <div class="who"><div class="avatar">AM</div><div><b>Amara M.</b><span>Product Designer, Lagos</span></div></div>
+    </div>
+    <div class="glass glow-card quote reveal d1">
+      <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <p>"The app is so calm it actually changed my relationship with money. No red alerts, no dark patterns. Just clarity."</p>
+      <div class="who"><div class="avatar">JK</div><div><b>Jonas K.</b><span>Freelance Developer, Berlin</span></div></div>
+    </div>
+    <div class="glass glow-card quote reveal d2">
+      <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <p>"Customer support answered at 2am in four minutes — an actual human. That's when I moved my business account over too."</p>
+      <div class="who"><div class="avatar">PS</div><div><b>Priya S.</b><span>Caf&eacute; Owner, London</span></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="cta-wrap" id="cta">
+  <div class="cta reveal">
+    <h2>Ready to see clearly?</h2>
+    <p>Join a quarter of a million people who ditched the grey areas of traditional banking. Your Slate account is four minutes away.</p>
+    <a class="btn" href="slate_bank_auth.html">Open Your Account</a>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-grid">
+    <div class="foot-brand">
+      <a class="brand" href="#">
+        <svg viewBox="-90 -90 180 180">
+          <path d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/>
+          <path d="M -42 52 A 52 52 0 0 0 42 52" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/>
+          <rect x="-26" y="-9" width="52" height="18" rx="9" fill="#4E5A68"/>
+        </svg>
+        SLATE BANK
+      </a>
+      <p>Banking in its truest form. A fully digital account built on one honest color and one honest promise — your money, clearly managed.</p>
+      <div class="socials">
+        <a href="#" aria-label="X"><svg viewBox="0 0 24 24"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+        <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".8" fill="currentColor" stroke="none"/></svg></a>
+        <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10.5V17M8 7.2v.1M12 17v-4a2.5 2.5 0 0 1 5 0v4"/></svg></a>
+        <a href="#" aria-label="YouTube"><svg viewBox="0 0 24 24"><path d="M22 12s0-3.4-.4-5a3 3 0 0 0-2.1-2C16.9 4.5 12 4.5 12 4.5s-4.9 0-7.5.5a3 3 0 0 0-2.1 2C2 8.6 2 12 2 12s0 3.4.4 5a3 3 0 0 0 2.1 2c2.6.5 7.5.5 7.5.5s4.9 0 7.5-.5a3 3 0 0 0 2.1-2c.4-1.6.4-5 .4-5z"/><path d="M10 9.5l5 2.5-5 2.5z"/></svg></a>
+      </div>
+    </div>
+    <div class="foot-col">
+      <h4>PRODUCTS</h4>
+      <ul>
+        <li><a href="#accounts">Everyday</a></li>
+        <li><a href="#accounts">Plus</a></li>
+        <li><a href="#accounts">Private</a></li>
+        <li><a href="#">Business</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <h4>COMPANY</h4>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <h4>RESOURCES</h4>
+      <ul>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Help Centre</a></li>
+        <li><a href="#">System Status</a></li>
+        <li><a href="#">Developers</a></li>
+      </ul>
+    </div>
+    <div class="foot-news">
+      <h4>STAY IN THE LOOP</h4>
+      <p>Product updates and money tips, once a month. No noise, unsubscribe anytime.</p>
+      <form class="news-form">
+        <input type="email" placeholder="you@example.com" required aria-label="Email address">
+        <button type="submit">Join</button>
+      </form>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <small>© 2026 Slate Bank. All rights reserved. Banking services provided by Slate Bank N.A., Member FDIC.</small>
+      <ul class="legal">
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+        <li><a href="#">Cookies</a></li>
+        <li><a href="#">Disclosures</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // the logo IS the loader — cloned fresh each time so the draw animation replays
+  const loaderTpl = document.getElementById('loader-tpl');
+  function playLoader(stage){
+    stage.innerHTML = '';
+    stage.appendChild(loaderTpl.content.cloneNode(true));
+  }
+  window.addEventListener('load', () => {
+    setTimeout(() => document.getElementById('nav').classList.add('show'), 400);
+  });
+
+  // site-wide loader before moving between pages
+  document.querySelectorAll('a[href$="slate_bank_auth.html"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const pt = document.getElementById('ptransition');
+      playLoader(pt.querySelector('.pt-stage'));
+      pt.classList.add('show');
+      setTimeout(() => location.href = a.getAttribute('href'), 1400);
+    });
+  });
+
+  // scroll fade-ins
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // mouse-follow glow on glass cards
+  document.querySelectorAll('.glow-card').forEach(c => {
+    c.addEventListener('mousemove', e => {
+      const r = c.getBoundingClientRect();
+      c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+  });
+
+  // newsletter signup
+  document.querySelector('.news-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.textContent = 'Subscribed ✓';
+    btn.style.background = '#5E9C7B';
+    e.target.querySelector('input').value = '';
+    setTimeout(() => { btn.textContent = 'Join'; btn.style.background = ''; }, 2600);
+  });
+
+  // balance counter
+  setTimeout(() => {
+    const el = document.getElementById('counter');
+    const target = 48250.75, dur = 1800, t0 = performance.now();
+    const tick = (t) => {
+      const p = Math.min((t - t0) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = '$' + (target * eased).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, 2900);
+</script>
+</body>
+</html>

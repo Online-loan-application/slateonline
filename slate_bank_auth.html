@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slate Bank — Sign In</title>
+<style>
+  :root{
+    --slate:#6C7A89; --slate-dark:#4E5A68; --slate-deep:#333D48;
+    --slate-light:#A7B3C2; --mist:#F4F6F8; --ink:#2E3742;
+    --slate-deep:#333D48; --glass-dark:rgba(255,255,255,.08); --glass-dark-brd:rgba(255,255,255,.16);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:var(--ink)}
+  .auth-wrap{display:flex;min-height:100vh}
+
+  
+  /* splash — the logo IS the loader */
+  #splash{position:fixed;inset:0;z-index:100;background:linear-gradient(135deg,#8A99AB,#6C7A89 55%,#4E5A68);display:flex;align-items:center;justify-content:center;transition:opacity .9s ease,visibility .9s}
+  #splash.hide{opacity:0;visibility:hidden;pointer-events:none}
+  .logo-loader{width:min(210px,52vw);height:auto;display:block}
+
+  /* page-transition loader */
+  #ptransition{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+    background:linear-gradient(135deg,#8A99AB,#6C7A89 55%,#4E5A68);opacity:0;visibility:hidden;transition:opacity .45s ease,visibility .45s}
+  #ptransition.show{opacity:1;visibility:visible}
+  #ptransition .pt-stage{display:flex;align-items:center;justify-content:center}
+  #ptransition .logo-loader{width:150px;height:auto}
+  #ptransition span{color:rgba(255,255,255,.85);font-size:13px;letter-spacing:5px;font-weight:600}
+
+  /* ============ LEFT BRAND PANEL ============ */
+  .brand-panel{
+    flex:1.1;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;
+    padding:48px 6vw;background:linear-gradient(150deg,#8A99AB,#6C7A89 50%,#4E5A68);
+  }
+  .blob{position:absolute;border-radius:50%;filter:blur(10px);animation:drift 14s ease-in-out infinite alternate}
+  .b1{width:420px;height:420px;top:-140px;right:-120px;background:rgba(255,255,255,.10)}
+  .b2{width:320px;height:320px;bottom:-100px;left:-80px;background:rgba(255,255,255,.08);animation-delay:-6s}
+  .b3{width:180px;height:180px;top:38%;left:52%;background:rgba(51,61,72,.25);animation-delay:-3s}
+  @keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,-30px) scale(1.12)}}
+
+  .brand-panel .brand{display:flex;align-items:center;gap:12px;color:#fff;font-weight:700;letter-spacing:3px;font-size:19px;text-decoration:none;position:relative}
+  .brand-panel .brand svg{width:34px;height:34px}
+  .brand-mid{position:relative;color:#fff;max-width:440px}
+  .brand-mid h1{font-size:clamp(30px,3.2vw,44px);font-weight:800;letter-spacing:-.5px;line-height:1.15;opacity:0;animation:fadeUp 1s ease .3s forwards}
+  .brand-mid p{margin-top:18px;font-size:16.5px;line-height:1.7;color:rgba(255,255,255,.85);opacity:0;animation:fadeUp 1s ease .55s forwards}
+  .brand-foot{position:relative;display:flex;gap:12px;opacity:0;animation:fadeUp 1s ease .8s forwards}
+  .mini-stat{padding:14px 20px;border-radius:16px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(10px);color:#fff}
+  .mini-stat b{display:block;font-size:19px}
+  .mini-stat span{font-size:11.5px;color:rgba(255,255,255,.75);letter-spacing:1px}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ============ RIGHT AUTH PANEL ============ */
+  .auth-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 5vw;background:linear-gradient(180deg,#F4F6F8,#E4E9EF);position:relative}
+  .auth-card{
+    width:min(440px,100%);padding:44px 40px;border-radius:28px;
+    background:rgba(255,255,255,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.8);
+    box-shadow:0 24px 70px rgba(78,90,104,.20), inset 0 1px 0 rgba(255,255,255,.9);
+    opacity:0;transform:translateY(24px);animation:cardIn .9s cubic-bezier(.2,.7,.2,1) .2s forwards;
+  }
+  @keyframes cardIn{to{opacity:1;transform:translateY(0)}}
+
+  .tabs{display:flex;background:rgba(108,122,137,.12);border-radius:100px;padding:5px;margin-bottom:34px}
+  .tab{flex:1;border:none;background:transparent;padding:11px 0;border-radius:100px;font-family:inherit;font-size:14.5px;font-weight:600;color:var(--slate);cursor:pointer;transition:all .35s}
+  .tab.active{background:#fff;color:var(--slate-dark);box-shadow:0 4px 14px rgba(78,90,104,.18)}
+
+  .auth-card h2{font-size:26px;font-weight:800;letter-spacing:-.5px;color:var(--slate-deep)}
+  .auth-card .sub{font-size:14.5px;color:var(--slate);margin:8px 0 30px}
+
+  .field{margin-bottom:20px;position:relative}
+  .field label{display:block;font-size:12.5px;font-weight:700;letter-spacing:1.5px;color:var(--slate-dark);margin-bottom:9px}
+  .field input{
+    width:100%;padding:15px 18px;border-radius:14px;font-family:inherit;font-size:15px;color:var(--ink);
+    background:rgba(255,255,255,.85);border:1.5px solid rgba(108,122,137,.28);outline:none;
+    transition:border-color .3s, box-shadow .3s;
+  }
+  .field input:focus{border-color:var(--slate);box-shadow:0 0 0 4px rgba(108,122,137,.16);background:#fff}
+  .field .hint{display:none;font-size:12.5px;color:#B4543E;margin-top:7px}
+  .field.error input{border-color:#B4543E}
+  .field.error .hint{display:block}
+  .peek{position:absolute;right:16px;top:38px;background:none;border:none;cursor:pointer;color:var(--slate);font-size:12.5px;font-weight:700;letter-spacing:.5px}
+
+  .row-between{display:flex;justify-content:space-between;align-items:center;margin:4px 0 28px;font-size:13.5px}
+  .check{display:flex;align-items:center;gap:9px;color:var(--slate-dark);cursor:pointer}
+  .check input{accent-color:var(--slate);width:16px;height:16px}
+  .row-between a{color:var(--slate);text-decoration:none;font-weight:600}
+  .row-between a:hover{color:var(--slate-dark)}
+
+  .btn{
+    width:100%;border:none;cursor:pointer;font-family:inherit;padding:16px;border-radius:100px;
+    font-size:15.5px;font-weight:700;letter-spacing:.5px;color:#fff;
+    background:linear-gradient(135deg,var(--slate),var(--slate-dark));
+    box-shadow:0 12px 28px rgba(108,122,137,.4);transition:transform .3s, box-shadow .3s;
+  }
+  .btn:hover{transform:translateY(-3px);box-shadow:0 18px 38px rgba(108,122,137,.5)}
+  .btn:active{transform:translateY(0)}
+
+  .divider{display:flex;align-items:center;gap:14px;margin:28px 0;color:var(--slate-light);font-size:12.5px;letter-spacing:2px}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:rgba(108,122,137,.25)}
+
+  .socials{display:flex;gap:14px}
+  .social{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:9px;padding:13px 0;border-radius:14px;
+    background:rgba(255,255,255,.8);border:1.5px solid rgba(108,122,137,.25);cursor:pointer;
+    font-family:inherit;font-size:14px;font-weight:600;color:var(--slate-dark);transition:all .3s;
+  }
+  .social:hover{border-color:var(--slate);transform:translateY(-2px);box-shadow:0 8px 20px rgba(78,90,104,.15)}
+
+  .fine{margin-top:26px;font-size:12.5px;color:var(--slate);text-align:center;line-height:1.6}
+  .fine a{color:var(--slate-dark);font-weight:600;text-decoration:none}
+  .back{position:absolute;top:26px;right:32px;font-size:13.5px;color:var(--slate);text-decoration:none;font-weight:600}
+  .back:hover{color:var(--slate-dark)}
+  .shake{animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+  /* footer */
+  footer{background:linear-gradient(180deg,var(--slate-deep),#262D36);padding:84px 6vw 0}
+  .footer-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.7fr 1fr 1fr 1fr 1.5fr;gap:48px;padding-bottom:70px}
+  .foot-brand p{color:var(--slate-light);font-size:14px;line-height:1.75;max-width:260px;margin-top:18px}
+  .foot-brand .brand{color:#fff}
+  .socials{display:flex;gap:12px;margin-top:26px}
+  .socials a{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    background:var(--glass-dark);border:1px solid var(--glass-dark-brd);backdrop-filter:blur(8px);transition:all .3s}
+  .socials a:hover{background:var(--slate);border-color:var(--slate);transform:translateY(-3px)}
+  .socials svg{width:16px;height:16px;fill:none;stroke:var(--slate-light);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .socials a:hover svg{stroke:#fff}
+  .foot-col h4, .foot-news h4{color:#fff;font-size:12px;letter-spacing:2.5px;font-weight:700;margin-bottom:24px}
+  .foot-col ul{list-style:none}
+  .foot-col li{margin-bottom:14px}
+  .foot-col a{color:var(--slate-light);text-decoration:none;font-size:14px;transition:color .3s,padding-left .3s}
+  .foot-col a:hover{color:#fff;padding-left:6px}
+  .foot-news p{color:var(--slate-light);font-size:13.5px;line-height:1.65;margin-bottom:20px}
+  .news-form{display:flex;background:var(--glass-dark);border:1px solid var(--glass-dark-brd);border-radius:100px;padding:5px;backdrop-filter:blur(8px)}
+  .news-form input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:inherit;font-size:14px;padding:10px 18px;min-width:0}
+  .news-form input::placeholder{color:rgba(255,255,255,.38)}
+  .news-form button{border:none;background:var(--slate);color:#fff;border-radius:100px;padding:10px 22px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:background .3s;white-space:nowrap}
+  .news-form button:hover{background:var(--slate-light)}
+  .footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding:28px 0;margin-top:8px}
+  .footer-bottom-inner{max-width:1180px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+  .footer-bottom small{color:rgba(255,255,255,.38);font-size:12.5px;letter-spacing:.4px}
+  .legal{display:flex;gap:26px;list-style:none}
+  .legal a{color:rgba(255,255,255,.55);text-decoration:none;font-size:13px;transition:color .3s}
+  .legal a:hover{color:#fff}
+
+
+  @media (max-width:880px){
+    .brand-panel{display:none}
+    .auth-panel{min-height:100vh}
+    .footer-grid{grid-template-columns:1fr 1fr;gap:40px}
+  }
+  @media (max-width:560px){
+    .footer-grid{grid-template-columns:1fr}
+    .footer-bottom-inner{flex-direction:column;text-align:center}
+  }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<template id="loader-tpl">
+<svg class="logo-loader" xmlns="http://www.w3.org/2000/svg" viewBox="375 105 150 170">
+  <defs>
+    <linearGradient id="slateGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8A99AB"/>
+      <stop offset="0.55" stop-color="#6C7A89"/>
+      <stop offset="1" stop-color="#4E5A68"/>
+    </linearGradient>
+    <linearGradient id="slateGradLight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A7B3C2"/>
+      <stop offset="1" stop-color="#6C7A89"/>
+    </linearGradient>
+    <style>
+    @keyframes drawStroke {
+      0%   { stroke-dashoffset: 330; animation-timing-function: cubic-bezier(.45,.05,.35,1); }
+      32%  { stroke-dashoffset: 0;   animation-timing-function: cubic-bezier(.55,.05,.35,1); }
+      56%  { stroke-dashoffset: 0;   animation-timing-function: cubic-bezier(.5,.05,.35,1); }
+      93%  { stroke-dashoffset: -330; }
+      100% { stroke-dashoffset: -330; }
+    }
+    @keyframes notchLoop {
+      0%,30%   { opacity: 0; transform: scale(.6); animation-timing-function: cubic-bezier(.2,.7,.3,1.3); }
+      38%      { opacity: 1; transform: scale(1.08); animation-timing-function: cubic-bezier(.3,.6,.4,1); }
+      44%,56%  { opacity: 1; transform: scale(1); animation-timing-function: cubic-bezier(.5,0,.6,1); }
+      66%,100% { opacity: 0; transform: scale(.6); }
+    }
+    @keyframes lockIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes shimmer { 0%,100% { opacity: .2; } 50% { opacity: .85; } }
+
+    #logo-lockup { animation: lockIn .5s ease .05s both; }
+    #slate-s-top, #slate-s-bottom {
+      stroke-dasharray: 330; stroke-dashoffset: 330;
+      animation: drawStroke 3.4s cubic-bezier(.45,.05,.35,1) infinite;
+    }
+    #slate-s-top   { animation-delay: .15s; }
+    #slate-s-bottom{ animation-delay: .55s; }
+    #slate-notch  { opacity: 0; transform-box: fill-box; transform-origin: center;
+      animation: notchLoop 3.4s ease infinite; }
+    #tagline { animation-delay: 1.95s; }
+    #slate-glint { animation: shimmer 3s ease-in-out .5s infinite; }
+    </style>
+  </defs>
+
+
+  <!-- ================= PRIMARY LOCKUP ================= -->
+  <g id="logo-lockup" transform="translate(450,190)">
+    <g id="mark">
+      <!-- S formed from two rounded strokes, plus a white notch cut -->
+      <path id="slate-s-top" d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"/>
+      <path id="slate-s-bottom" d="M -42 52 A 52 52 0 0 0 42 52" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"/>
+      <rect id="slate-notch" x="-26" y="-9" width="52" height="18" rx="9" fill="#6C7A89"/>
+      <path id="slate-glint" d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".35"/>
+    </g>
+  </g>
+
+
+
+
+</svg>
+</template>
+<div id="splash"></div>
+<div id="ptransition"><div class="pt-stage"></div><span id="ptLabel">SECURING SESSION</span></div>
+
+<!-- LEFT: BRAND -->
+<main class="auth-wrap">
+<aside class="brand-panel">
+  <a class="brand" href="slate_bank_landing.html">
+    <svg viewBox="-90 -90 180 180">
+      <path d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/>
+      <path d="M -42 52 A 52 52 0 0 0 42 52" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/>
+      <rect x="-26" y="-9" width="52" height="18" rx="9" fill="#6C7A89"/>
+    </svg>
+    SLATE BANK
+  </a>
+  <div class="brand-mid">
+    <h1>Welcome back to clarity.</h1>
+    <p>Sign in to your Slate account and see your money the way it should be — simple, secure, and in its truest form.</p>
+  </div>
+  <div class="brand-foot">
+    <div class="mini-stat"><b>256-bit</b><span>ENCRYPTION</span></div>
+    <div class="mini-stat"><b>FDIC</b><span>INSURED</span></div>
+    <div class="mini-stat"><b>ISO</b><span>27001</span></div>
+  </div>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+</aside>
+
+<!-- RIGHT: AUTH -->
+<main class="auth-panel">
+  <a class="back" href="slate_bank_landing.html">&larr; Back to site</a>
+  <div class="auth-card">
+    <div class="tabs">
+      <button class="tab active" id="tabSignin" onclick="switchMode('signin')">Sign In</button>
+      <button class="tab" id="tabSignup" onclick="switchMode('signup')">Create Account</button>
+    </div>
+
+    <h2 id="formTitle">Sign in to Slate</h2>
+    <p class="sub" id="formSub">Good to see you again. Enter your details below.</p>
+
+    <form id="authForm" novalidate>
+      <div class="field" id="fName" style="display:none">
+        <label for="name">FULL NAME</label>
+        <input type="text" id="name" placeholder="Ada Okafor" autocomplete="name">
+        <div class="hint">Please enter your full name.</div>
+      </div>
+      <div class="field" id="fEmail">
+        <label for="email">EMAIL ADDRESS</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+        <div class="hint">Please enter a valid email address.</div>
+      </div>
+      <div class="field" id="fPass">
+        <label for="password">PASSWORD</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+        <button type="button" class="peek" onclick="togglePeek()">SHOW</button>
+        <div class="hint" id="passHint">Password must be at least 8 characters.</div>
+      </div>
+      <div class="row-between" id="rememberRow">
+        <label class="check"><input type="checkbox" checked> Remember me</label>
+        <a href="#">Forgot password?</a>
+      </div>
+      <button class="btn" type="submit" id="submitBtn">Sign In Securely</button>
+    </form>
+
+    <div class="divider">OR CONTINUE WITH</div>
+    <div class="socials">
+      <button class="social">
+        <svg width="17" height="17" viewBox="0 0 24 24"><path fill="#6C7A89" d="M21.8 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.5a4.7 4.7 0 0 1-2 3.1v2.6h3.3c1.9-1.8 3-4.4 3-7.6z"/><path fill="#4E5A68" d="M12 22c2.7 0 5-.9 6.7-2.4l-3.3-2.6c-.9.6-2.1 1-3.4 1-2.6 0-4.8-1.8-5.6-4.2H3v2.7A10 10 0 0 0 12 22z"/><path fill="#A7B3C2" d="M6.4 13.8a6 6 0 0 1 0-3.8V7.3H3a10 10 0 0 0 0 9.4z"/><path fill="#8A99AB" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3 7.3l3.4 2.7C7.2 7.7 9.4 6 12 6z"/></svg>
+        Google
+      </button>
+      <button class="social">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="#6C7A89"><path d="M16.4 12.9c0-2.4 2-3.6 2.1-3.6-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-2-.9-3.2-.9C6.3 7.5 4.5 8.7 3.6 10.6c-1.7 3-.4 7.5 1.2 9.9.8 1.2 1.8 2.5 3.1 2.4 1.2-.1 1.7-.8 3.2-.8s1.9.8 3.2.8c1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.6-1-2.2-4.2zM14.1 5.4c.7-.8 1.1-1.9 1-3-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1 .1 2.1-.6 2.9-1.5z"/></svg>
+        Apple
+      </button>
+    </div>
+
+    <p class="fine">Protected by 256-bit encryption. By continuing you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</p>
+  </div>
+</main>
+</main>
+
+<footer>
+  <div class="footer-grid">
+    <div class="foot-brand">
+      <a class="brand" href="#">
+        <svg viewBox="-90 -90 180 180">
+          <path d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/>
+          <path d="M -42 52 A 52 52 0 0 0 42 52" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/>
+          <rect x="-26" y="-9" width="52" height="18" rx="9" fill="#4E5A68"/>
+        </svg>
+        SLATE BANK
+      </a>
+      <p>Banking in its truest form. A fully digital account built on one honest color and one honest promise — your money, clearly managed.</p>
+      <div class="socials">
+        <a href="#" aria-label="X"><svg viewBox="0 0 24 24"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+        <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".8" fill="currentColor" stroke="none"/></svg></a>
+        <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10.5V17M8 7.2v.1M12 17v-4a2.5 2.5 0 0 1 5 0v4"/></svg></a>
+        <a href="#" aria-label="YouTube"><svg viewBox="0 0 24 24"><path d="M22 12s0-3.4-.4-5a3 3 0 0 0-2.1-2C16.9 4.5 12 4.5 12 4.5s-4.9 0-7.5.5a3 3 0 0 0-2.1 2C2 8.6 2 12 2 12s0 3.4.4 5a3 3 0 0 0 2.1 2c2.6.5 7.5.5 7.5.5s4.9 0 7.5-.5a3 3 0 0 0 2.1-2c.4-1.6.4-5 .4-5z"/><path d="M10 9.5l5 2.5-5 2.5z"/></svg></a>
+      </div>
+    </div>
+    <div class="foot-col">
+      <h4>PRODUCTS</h4>
+      <ul>
+        <li><a href="#accounts">Everyday</a></li>
+        <li><a href="#accounts">Plus</a></li>
+        <li><a href="#accounts">Private</a></li>
+        <li><a href="#">Business</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <h4>COMPANY</h4>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <h4>RESOURCES</h4>
+      <ul>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Help Centre</a></li>
+        <li><a href="#">System Status</a></li>
+        <li><a href="#">Developers</a></li>
+      </ul>
+    </div>
+    <div class="foot-news">
+      <h4>STAY IN THE LOOP</h4>
+      <p>Product updates and money tips, once a month. No noise, unsubscribe anytime.</p>
+      <form class="news-form">
+        <input type="email" placeholder="you@example.com" required aria-label="Email address">
+        <button type="submit">Join</button>
+      </form>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <small>© 2026 Slate Bank. All rights reserved. Banking services provided by Slate Bank N.A., Member FDIC.</small>
+      <ul class="legal">
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+        <li><a href="#">Cookies</a></li>
+        <li><a href="#">Disclosures</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // the logo IS the loader — cloned fresh each time so the draw animation replays
+  const loaderTpl = document.getElementById('loader-tpl');
+  function playLoader(stage){
+    stage.innerHTML = '';
+    stage.appendChild(loaderTpl.content.cloneNode(true));
+  }
+  playLoader(document.getElementById('splash'));
+
+
+  window.addEventListener('load', () => setTimeout(() => document.getElementById('splash').classList.add('hide'), 2400));
+
+  // loader before returning to the site
+  document.querySelectorAll('a[href$="slate_bank_landing.html"]').forEach(l => {
+    l.addEventListener('click', e => {
+      e.preventDefault();
+      const pt = document.getElementById('ptransition');
+      playLoader(pt.querySelector('.pt-stage'));
+      pt.classList.add('show');
+      setTimeout(() => location.href = l.getAttribute('href'), 1400);
+    });
+  });
+
+  let mode = 'signin';
+
+  function switchMode(m){
+    mode = m;
+    document.getElementById('tabSignin').classList.toggle('active', m === 'signin');
+    document.getElementById('tabSignup').classList.toggle('active', m === 'signup');
+    document.getElementById('fName').style.display = m === 'signup' ? 'block' : 'none';
+    document.getElementById('rememberRow').style.display = m === 'signin' ? 'flex' : 'none';
+    document.getElementById('formTitle').textContent = m === 'signin' ? 'Sign in to Slate' : 'Create your Slate account';
+    document.getElementById('formSub').textContent = m === 'signin' ? 'Good to see you again. Enter your details below.' : 'Four minutes to open. A lifetime of clarity.';
+    document.getElementById('submitBtn').textContent = m === 'signin' ? 'Sign In Securely' : 'Create Account';
+    document.getElementById('password').setAttribute('autocomplete', m === 'signin' ? 'current-password' : 'new-password');
+  }
+
+  function togglePeek(){
+    const p = document.getElementById('password');
+    const show = p.type === 'password';
+    p.type = show ? 'text' : 'password';
+    document.querySelector('.peek').textContent = show ? 'HIDE' : 'SHOW';
+  }
+
+  document.getElementById('authForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    let ok = true;
+    const email = document.getElementById('email');
+    const pass = document.getElementById('password');
+    const name = document.getElementById('name');
+
+    const mark = (id, bad) => {
+      document.getElementById(id).classList.toggle('error', bad);
+      if (bad) ok = false;
+    };
+    if (mode === 'signup') mark('fName', name.value.trim().length < 2);
+    mark('fEmail', !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value));
+    mark('fPass', pass.value.length < 8);
+
+    const card = document.querySelector('.auth-card');
+    card.classList.remove('shake');
+    if (!ok) { void card.offsetWidth; card.classList.add('shake'); return; }
+
+    const btn = document.getElementById('submitBtn');
+    const pt = document.getElementById('ptransition');
+    const ptLabel = document.getElementById('ptLabel');
+    btn.textContent = mode === 'signin' ? 'Verifying…' : 'Creating your account…';
+    btn.style.opacity = '.75';
+    // the logo loader takes over the whole screen while processing
+    ptLabel.textContent = 'PROCESSING';
+    playLoader(pt.querySelector('.pt-stage'));
+    pt.classList.add('show');
+    setTimeout(() => {
+      pt.classList.remove('show');
+      btn.textContent = mode === 'signin' ? 'Welcome back ✓' : 'Account created ✓';
+      btn.style.opacity = '1';
+      btn.style.background = 'linear-gradient(135deg,#5E8C7B,#4E7A6A)';
+      setTimeout(() => {
+        ptLabel.textContent = 'SECURING SESSION';
+        playLoader(pt.querySelector('.pt-stage'));
+        pt.classList.add('show');
+        setTimeout(() => location.href = 'slate_bank_dashboard.html', 1700);
+      }, 900);
+    }, 2300);
+  });
+  // newsletter signup
+  document.querySelector('.news-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.textContent = 'Subscribed ✓';
+    btn.style.background = '#5E9C7B';
+    e.target.querySelector('input').value = '';
+    setTimeout(() => { btn.textContent = 'Join'; btn.style.background = ''; }, 2600);
+  });
+</script>
+</body>
+</html>

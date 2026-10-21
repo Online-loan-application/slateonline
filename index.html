@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slate Bank</title>
+<link rel="prefetch" href="slate_bank_landing.html">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+    background:linear-gradient(135deg,#8A99AB 0%,#6C7A89 55%,#4E5A68 100%);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    overflow:hidden;position:relative;cursor:pointer;
+    transition:opacity .8s ease, filter .8s ease;
+  }
+  body.leaving{opacity:0;filter:blur(6px)}
+
+  /* soft drifting glows behind the mark */
+  .aura{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none}
+  .a1{width:520px;height:520px;top:-140px;right:-120px;background:rgba(255,255,255,.10);animation:drift 15s ease-in-out infinite alternate}
+  .a2{width:420px;height:420px;bottom:-140px;left:-110px;background:rgba(255,255,255,.08);animation:drift 18s ease-in-out -6s infinite alternate-reverse}
+  .a3{width:280px;height:280px;top:52%;left:56%;background:rgba(51,61,72,.28);animation:drift 12s ease-in-out -3s infinite alternate}
+  @keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(46px,-38px) scale(1.14)}}
+
+  /* centered stage: logo -> generous gap -> progress -> generous gap -> caption */
+  .stage{
+    position:relative;display:flex;flex-direction:column;align-items:center;
+    opacity:0;animation:stageIn 1s cubic-bezier(.2,.7,.2,1) .1s forwards;
+  }
+  @keyframes stageIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+  .logo-loader{width:min(440px,86vw);height:auto;display:block}
+
+  .progress{
+    margin-top:56px;width:240px;height:4px;border-radius:4px;
+    background:rgba(255,255,255,.18);overflow:hidden;position:relative;
+  }
+  .progress i{
+    display:block;height:100%;width:0;border-radius:4px;
+    background:linear-gradient(90deg,rgba(255,255,255,.65),#fff);
+    animation:fill 3s cubic-bezier(.4,.1,.3,1) .3s forwards;
+    position:relative;
+  }
+  .progress i::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);
+    transform:translateX(-100%);animation:sheen 1.6s ease-in-out 1s infinite;
+  }
+  @keyframes fill{to{width:100%}}
+  @keyframes sheen{to{transform:translateX(100%)}}
+
+  .caption{
+    margin-top:26px;color:rgba(255,255,255,.72);
+    font-size:12px;font-weight:600;letter-spacing:6px;text-align:center;
+  }
+
+  /* corners */
+  .corner{position:absolute;font-size:11px;letter-spacing:3.5px;color:rgba(255,255,255,.45);font-weight:600}
+  .tl{top:34px;left:42px}
+  .br{bottom:34px;right:42px}
+  .bl{bottom:34px;left:42px;font-weight:400;letter-spacing:2.5px}
+  .skip{
+    position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
+    color:rgba(255,255,255,.0);font-size:11px;letter-spacing:3px;font-weight:600;
+    transition:color .6s;animation:skipIn .8s ease 3.4s forwards;
+  }
+  @keyframes skipIn{to{color:rgba(255,255,255,.55)}}
+
+  @media (prefers-reduced-motion:reduce){
+    .a1,.a2,.a3,.progress i::after{animation:none}
+  }
+  @media (max-width:600px){
+    .tl{left:24px}.bl{left:24px}.br{right:24px}
+    .logo-loader{width:min(360px,88vw)}
+  }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="aura a1"></div><div class="aura a2"></div><div class="aura a3"></div>
+
+<span class="corner tl">SLATE BANK</span>
+<span class="corner br">EST. 2026</span>
+<span class="corner bl">256-BIT SECURE CONNECTION</span>
+
+<div class="stage">
+<svg class="logo-loader" xmlns="http://www.w3.org/2000/svg" viewBox="146 101 608 333">
+  <defs>
+    <linearGradient id="slateGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8A99AB"/>
+      <stop offset="0.55" stop-color="#6C7A89"/>
+      <stop offset="1" stop-color="#4E5A68"/>
+    </linearGradient>
+    <linearGradient id="slateGradLight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A7B3C2"/>
+      <stop offset="1" stop-color="#6C7A89"/>
+    </linearGradient>
+    <style>
+    @keyframes drawStroke {
+      0%   { stroke-dashoffset: 330; animation-timing-function: cubic-bezier(.45,.05,.35,1); }
+      32%  { stroke-dashoffset: 0;   animation-timing-function: cubic-bezier(.55,.05,.35,1); }
+      56%  { stroke-dashoffset: 0;   animation-timing-function: cubic-bezier(.5,.05,.35,1); }
+      93%  { stroke-dashoffset: -330; }
+      100% { stroke-dashoffset: -330; }
+    }
+    @keyframes notchLoop {
+      0%,30%   { opacity: 0; transform: scale(.6); animation-timing-function: cubic-bezier(.2,.7,.3,1.3); }
+      38%      { opacity: 1; transform: scale(1.08); animation-timing-function: cubic-bezier(.3,.6,.4,1); }
+      44%,56%  { opacity: 1; transform: scale(1); animation-timing-function: cubic-bezier(.5,0,.6,1); }
+      66%,100% { opacity: 0; transform: scale(.6); }
+    }
+    @keyframes letterLoop {
+      0%,38%   { opacity: 0; transform: translateY(12px); animation-timing-function: cubic-bezier(.2,.7,.2,1); }
+      50%,60%  { opacity: 1; transform: translateY(0); animation-timing-function: cubic-bezier(.5,0,.6,1); }
+      74%,100% { opacity: 0; transform: translateY(-10px); }
+    }
+    @keyframes lockIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes shimmer { 0%,100% { opacity: .2; } 50% { opacity: .85; } }
+
+    #logo-lockup { animation: lockIn .5s ease .05s both; }
+    #slate-s-top, #slate-s-bottom {
+      stroke-dasharray: 330; stroke-dashoffset: 330;
+      animation: drawStroke 3.4s cubic-bezier(.45,.05,.35,1) infinite;
+    }
+    #slate-s-top   { animation-delay: .15s; }
+    #slate-s-bottom{ animation-delay: .55s; }
+    #slate-notch  { opacity: 0; transform-box: fill-box; transform-origin: center;
+      animation: notchLoop 3.4s ease infinite; }
+    #wordmark text, #tagline { opacity: 0; animation: letterLoop 3.4s cubic-bezier(.2,.7,.2,1) infinite; }
+    #wordmark .l1 { animation-delay: 1.32s; } #wordmark .l2 { animation-delay: 1.38s; }
+    #wordmark .l3 { animation-delay: 1.44s; } #wordmark .l4 { animation-delay: 1.50s; }
+    #wordmark .l5 { animation-delay: 1.56s; } #wordmark .l6 { animation-delay: 1.62s; }
+    #wordmark .l7 { animation-delay: 1.68s; } #wordmark .l8 { animation-delay: 1.74s; }
+    #wordmark .l9 { animation-delay: 1.80s; } #wordmark .l10{ animation-delay: 1.86s; }
+    #tagline { animation-delay: 1.95s; }
+    #slate-glint { animation: shimmer 3s ease-in-out .5s infinite; }
+    </style>
+  </defs>
+
+
+  <!-- ================= PRIMARY LOCKUP ================= -->
+  <g id="logo-lockup" transform="translate(450,190)">
+    <g id="mark">
+      <!-- S formed from two rounded strokes, plus a white notch cut -->
+      <path id="slate-s-top" d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"/>
+      <path id="slate-s-bottom" d="M -42 52 A 52 52 0 0 0 42 52" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"/>
+      <rect id="slate-notch" x="-26" y="-9" width="52" height="18" rx="9" fill="#6C7A89"/>
+      <path id="slate-glint" d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".35"/>
+    </g>
+  </g>
+
+  <g id="wordmark" transform="translate(450,368)" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="60" letter-spacing="12" fill="#FFFFFF">
+    <text class="l1" x="-260" y="0">S</text>
+    <text class="l2" x="-198" y="0">L</text>
+    <text class="l3" x="-142"  y="0">A</text>
+    <text class="l4" x="-80"  y="0">T</text>
+    <text class="l5" x="-20"   y="0">E</text>
+    <text class="l6" x="76"  y="0" fill="#C4CDD8">B</text>
+    <text class="l7" x="132"  y="0" fill="#C4CDD8">A</text>
+    <text class="l8" x="194"  y="0" fill="#C4CDD8">N</text>
+    <text class="l9" x="256"  y="0" fill="#C4CDD8">K</text>
+  </g>
+
+  <text id="tagline" x="450" y="418" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="18" letter-spacing="7" fill="rgba(255,255,255,.75)">BANKING IN ITS TRUEST FORM</text>
+
+
+</svg>
+  <div class="progress"><i></i></div>
+  <div class="caption">PREPARING YOUR BANKING EXPERIENCE</div>
+</div>
+
+<div class="skip">CLICK ANYWHERE TO CONTINUE</div>
+
+<script>
+  let gone = false;
+  function go(){
+    if (gone) return;
+    gone = true;
+    document.body.classList.add('leaving');
+    setTimeout(() => location.href = 'slate_bank_landing.html', 750);
+  }
+  setTimeout(go, 3400);
+  document.body.addEventListener('click', () => setTimeout(go, 1200)); // let the logo finish its draw first
+</script>
+</body>
+</html>

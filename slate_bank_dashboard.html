@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slate Bank — Dashboard</title>
+<style>
+  :root{
+    --slate:#6C7A89; --slate-dark:#4E5A68; --slate-deep:#333D48; --slate-deeper:#262D36;
+    --slate-light:#A7B3C2; --mist:#F4F6F8; --ink:#2E3742;
+    --glass:rgba(255,255,255,.6); --glass-brd:rgba(255,255,255,.7);
+    --green:#5E9C7B; --red:#B4543E;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:var(--ink);background:#E9EDF2;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:radial-gradient(600px 400px at 90% -5%, rgba(108,122,137,.22), transparent 60%),
+               radial-gradient(500px 400px at -5% 60%, rgba(167,179,194,.3), transparent 60%),
+               linear-gradient(180deg,#F4F6F8,#E4E9EF);}
+  .glass{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border:1px solid var(--glass-brd);border-radius:22px;
+    box-shadow:0 8px 32px rgba(78,90,104,.13), inset 0 1px 0 rgba(255,255,255,.8)}
+
+  /* ============ SIDEBAR ============ */
+  aside{position:fixed;left:0;top:0;bottom:0;width:248px;z-index:60;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,var(--slate-deep),var(--slate-deeper));padding:28px 18px;transition:transform .4s cubic-bezier(.2,.7,.2,1)}
+  .brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:700;letter-spacing:3px;font-size:16px;text-decoration:none;padding:0 10px 26px}
+  .brand svg{width:28px;height:28px}
+  .side-label{font-size:10.5px;letter-spacing:2.5px;color:rgba(255,255,255,.35);font-weight:700;padding:14px 12px 10px}
+  .nav-item{display:flex;align-items:center;gap:13px;padding:12px 14px;border-radius:13px;color:var(--slate-light);
+    text-decoration:none;font-size:14.5px;font-weight:500;margin-bottom:4px;transition:all .3s;position:relative}
+  .nav-item svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+  .nav-item.active{color:#fff;background:linear-gradient(135deg,var(--slate),var(--slate-dark));box-shadow:0 8px 20px rgba(108,122,137,.4)}
+  .nav-item .pill{margin-left:auto;background:var(--slate);color:#fff;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:100px}
+  .upsell{margin-top:auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:20px}
+  .upsell b{color:#fff;font-size:14px;display:block;margin-bottom:7px}
+  .upsell p{color:var(--slate-light);font-size:12.5px;line-height:1.55;margin-bottom:14px}
+  .upsell a{display:block;text-align:center;background:#fff;color:var(--slate-dark);border-radius:100px;padding:9px;font-size:13px;font-weight:700;text-decoration:none;transition:transform .3s}
+  .upsell a:hover{transform:translateY(-2px)}
+  .me{display:flex;align-items:center;gap:12px;padding:16px 10px 0;margin-top:14px;border-top:1px solid rgba(255,255,255,.1)}
+  .me .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--slate-light),var(--slate));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13.5px}
+  .me b{color:#fff;font-size:13.5px;display:block}
+  .me span{color:var(--slate-light);font-size:11.5px}
+
+  /* ============ MAIN ============ */
+  main{margin-left:248px;padding:28px 34px 60px;min-height:100vh}
+  .topbar{display:flex;align-items:center;gap:18px;margin-bottom:30px}
+  .burger{display:none;background:var(--glass);border:1px solid var(--glass-brd);border-radius:12px;width:42px;height:42px;cursor:pointer;font-size:18px;color:var(--slate-dark)}
+  .greet h1{font-size:24px;font-weight:800;letter-spacing:-.4px;color:var(--slate-deep)}
+  .greet p{font-size:13.5px;color:var(--slate);margin-top:3px}
+  .search{margin-left:auto;display:flex;align-items:center;gap:10px;background:var(--glass);border:1px solid var(--glass-brd);border-radius:100px;padding:10px 18px;min-width:230px}
+  .search svg{width:16px;height:16px;stroke:var(--slate);fill:none;stroke-width:2;stroke-linecap:round}
+  .search input{border:none;background:transparent;outline:none;font-family:inherit;font-size:14px;color:var(--ink);width:100%}
+  .icon-btn{position:relative;width:42px;height:42px;border-radius:13px;background:var(--glass);border:1px solid var(--glass-brd);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .3s}
+  .icon-btn:hover{transform:translateY(-2px)}
+  .icon-btn svg{width:18px;height:18px;stroke:var(--slate-dark);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .icon-btn i{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid #fff}
+
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:22px}
+  .span4{grid-column:span 4}.span8{grid-column:span 8}.span6{grid-column:span 6}.span12{grid-column:span 12}
+
+  .card{padding:26px;transition:transform .4s, box-shadow .4s}
+  .card:hover{transform:translateY(-4px);box-shadow:0 22px 55px rgba(78,90,104,.2)}
+
+  /* balance */
+  .bal-card{background:linear-gradient(135deg,rgba(138,153,171,.9),rgba(108,122,137,.92) 55%,rgba(78,90,104,.94));border:1px solid rgba(255,255,255,.3);
+    backdrop-filter:blur(18px);border-radius:22px;padding:28px;color:#fff;box-shadow:0 18px 45px rgba(78,90,104,.35);position:relative;overflow:hidden}
+  .bal-card::after{content:"";position:absolute;top:-70px;right:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.09)}
+  .bal-card .lbl{font-size:12px;letter-spacing:2.5px;font-weight:700;color:rgba(255,255,255,.75)}
+  .bal-card .amt{font-size:42px;font-weight:800;letter-spacing:-1.2px;margin:12px 0 8px;position:relative}
+  .bal-card .delta{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.14);padding:7px 14px;border-radius:100px;font-size:12.5px;font-weight:600}
+  .bal-card .eye{position:absolute;top:24px;right:24px;background:rgba(255,255,255,.12);border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .eye svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+  .stat .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .stat .ic{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center}
+  .stat .ic svg{width:20px;height:20px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .ic.g{background:rgba(94,156,123,.15)}.ic.g svg{stroke:var(--green)}
+  .ic.r{background:rgba(180,84,62,.13)}.ic.r svg{stroke:var(--red)}
+  .ic.b{background:rgba(108,122,137,.16)}.ic.b svg{stroke:var(--slate)}
+  .stat .v{font-size:27px;font-weight:800;letter-spacing:-.8px;color:var(--slate-deep)}
+  .stat .t{font-size:13px;color:var(--slate);margin-top:5px}
+  .stat .m{font-size:12px;font-weight:700;margin-top:10px}
+  .m.up{color:var(--green)}.m.dn{color:var(--red)}
+
+  /* chart */
+  .chart-card h3, .list-card h3{font-size:15px;font-weight:700;color:var(--slate-deep)}
+  .chart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .legend{display:flex;gap:18px;font-size:12.5px;color:var(--slate)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px}
+  canvas#chart{width:100%;height:260px;display:block}
+
+  /* bank cards */
+  .vcard{border-radius:18px;padding:22px;color:#fff;position:relative;overflow:hidden;margin-bottom:16px;
+    background:linear-gradient(135deg,#8A99AB,#6C7A89 50%,#4E5A68);box-shadow:0 14px 34px rgba(78,90,104,.35)}
+  .vcard.dark{background:linear-gradient(135deg,#4E5A68,#333D48 60%,#262D36)}
+  .vcard .row{display:flex;justify-content:space-between;align-items:center}
+  .vcard .chip{width:34px;height:24px;border-radius:5px;background:linear-gradient(135deg,#E8C97A,#C9A24B)}
+  .vcard .num{letter-spacing:3.5px;font-size:15.5px;font-weight:600;margin:20px 0 14px}
+  .vcard .meta{font-size:12px;color:rgba(255,255,255,.8)}
+  .vcard .meta b{display:block;font-size:13.5px;color:#fff;margin-top:3px}
+  .freeze{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:13.5px;color:var(--slate-dark)}
+  .switch{width:42px;height:24px;border-radius:100px;background:rgba(108,122,137,.3);border:none;cursor:pointer;position:relative;transition:background .3s}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .3s;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+  .switch.on{background:var(--slate)}
+  .switch.on::after{left:21px}
+
+  /* transactions */
+  .tx{display:flex;align-items:center;gap:15px;padding:14px 4px;border-bottom:1px solid rgba(108,122,137,.13)}
+  .tx:last-child{border-bottom:none}
+  .tx .tic{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex:none}
+  .tx .tic svg{width:18px;height:18px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .tx b{font-size:14px;color:var(--slate-deep);display:block}
+  .tx span{font-size:12px;color:var(--slate)}
+  .tx .amt{margin-left:auto;font-weight:700;font-size:14.5px;text-align:right}
+  .tx .amt small{display:block;font-size:11px;font-weight:600;color:var(--slate-light);margin-top:2px}
+  .pos{color:var(--green)}.neg{color:var(--ink)}
+
+  /* goals */
+  .goal{margin-bottom:22px}
+  .goal .row{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:9px}
+  .goal .row b{color:var(--slate-deep)}
+  .goal .row span{color:var(--slate)}
+  .bar{height:9px;border-radius:6px;background:rgba(108,122,137,.16);overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--slate-light),var(--slate));
+    transition:width 1.4s cubic-bezier(.2,.7,.2,1)}
+
+
+  /* entry loader — the logo while the dashboard prepares */
+  #dLoader{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:30px;
+    background:linear-gradient(135deg,#8A99AB,#6C7A89 55%,#4E5A68);transition:opacity .7s ease,visibility .7s}
+  #dLoader.hide{opacity:0;visibility:hidden;pointer-events:none}
+  #dLoader .logo-loader{width:170px;height:auto;display:block}
+  #dLoader span{color:rgba(255,255,255,.8);font-size:12px;font-weight:600;letter-spacing:5px}
+
+  /* fade-ins */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+  .d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}.d5{transition-delay:.4s}
+
+  @media (max-width:1100px){.span4,.span8,.span6{grid-column:span 12}}
+  @media (max-width:880px){
+    aside{transform:translateX(-100%)}
+    aside.open{transform:translateX(0)}
+    main{margin-left:0;padding:20px 18px 50px}
+    .burger{display:block}
+    .search{display:none}
+  }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div id="dLoader">
+<svg class="logo-loader" xmlns="http://www.w3.org/2000/svg" viewBox="375 105 150 170">
+  <defs>
+    <linearGradient id="slateGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8A99AB"/>
+      <stop offset="0.55" stop-color="#6C7A89"/>
+      <stop offset="1" stop-color="#4E5A68"/>
+    </linearGradient>
+    <linearGradient id="slateGradLight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A7B3C2"/>
+      <stop offset="1" stop-color="#6C7A89"/>
+    </linearGradient>
+    <style>
+    @keyframes drawStroke {
+      0%   { stroke-dashoffset: 330; animation-timing-function: cubic-bezier(.45,.05,.35,1); }
+      32%  { stroke-dashoffset: 0;   animation-timing-function: cubic-bezier(.55,.05,.35,1); }
+      56%  { stroke-dashoffset: 0;   animation-timing-function: cubic-bezier(.5,.05,.35,1); }
+      93%  { stroke-dashoffset: -330; }
+      100% { stroke-dashoffset: -330; }
+    }
+    @keyframes notchLoop {
+      0%,30%   { opacity: 0; transform: scale(.6); animation-timing-function: cubic-bezier(.2,.7,.3,1.3); }
+      38%      { opacity: 1; transform: scale(1.08); animation-timing-function: cubic-bezier(.3,.6,.4,1); }
+      44%,56%  { opacity: 1; transform: scale(1); animation-timing-function: cubic-bezier(.5,0,.6,1); }
+      66%,100% { opacity: 0; transform: scale(.6); }
+    }
+    @keyframes lockIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes shimmer { 0%,100% { opacity: .2; } 50% { opacity: .85; } }
+
+    #logo-lockup { animation: lockIn .5s ease .05s both; }
+    #slate-s-top, #slate-s-bottom {
+      stroke-dasharray: 330; stroke-dashoffset: 330;
+      animation: drawStroke 3.4s cubic-bezier(.45,.05,.35,1) infinite;
+    }
+    #slate-s-top   { animation-delay: .15s; }
+    #slate-s-bottom{ animation-delay: .55s; }
+    #slate-notch  { opacity: 0; transform-box: fill-box; transform-origin: center;
+      animation: notchLoop 3.4s ease infinite; }
+    #tagline { animation-delay: 1.95s; }
+    #slate-glint { animation: shimmer 3s ease-in-out .5s infinite; }
+    </style>
+  </defs>
+
+
+  <!-- ================= PRIMARY LOCKUP ================= -->
+  <g id="logo-lockup" transform="translate(450,190)">
+    <g id="mark">
+      <!-- S formed from two rounded strokes, plus a white notch cut -->
+      <path id="slate-s-top" d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"/>
+      <path id="slate-s-bottom" d="M -42 52 A 52 52 0 0 0 42 52" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"/>
+      <rect id="slate-notch" x="-26" y="-9" width="52" height="18" rx="9" fill="#6C7A89"/>
+      <path id="slate-glint" d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".35"/>
+    </g>
+  </g>
+
+
+
+
+</svg>
+  <span>LOADING YOUR DASHBOARD</span>
+</div>
+
+
+<aside id="sidebar">
+  <a class="brand" href="slate_bank_landing.html">
+    <svg viewBox="-90 -90 180 180"><path d="M 42 -52 A 52 52 0 0 0 -42 -52" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/><path d="M -42 52 A 52 52 0 0 0 42 52" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/><rect x="-26" y="-9" width="52" height="18" rx="9" fill="#4E5A68"/></svg>
+    SLATE BANK
+  </a>
+  <div class="side-label">MENU</div>
+  <nav>
+    <a class="nav-item active" href="#"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M3 10h18M3 6h18M3 14h18M3 18h18"/></svg>Accounts</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/></svg>Cards</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5M12 15V3"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Payments <span class="pill">3</span></a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Analytics</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.06-.4.1-.8.1-1.2z"/></svg>Settings</a>
+  </nav>
+  <div class="upsell">
+    <b>Slate Plus</b>
+    <p>Unlock 4.1% APY, 10 smart pots and fee-free global withdrawals.</p>
+    <a href="#">Upgrade — $6/mo</a>
+  </div>
+  <div class="me">
+    <div class="av">AO</div>
+    <div><b>Ada Okafor</b><span>Plus member</span></div>
+  </div>
+</aside>
+
+<main>
+  <div class="topbar reveal visible">
+    <button class="burger" id="burger" aria-label="Menu">☰</button>
+    <div class="greet">
+      <h1>Good afternoon, Ada</h1>
+      <p>Wednesday, 21 October 2026 · here's your money at a glance</p>
+    </div>
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" placeholder="Search transactions, payees…">
+    </div>
+    <button class="icon-btn" aria-label="Notifications">
+      <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      <i></i>
+    </button>
+  </div>
+
+  <div class="grid">
+    <!-- balance + stats -->
+    <div class="span8 reveal visible">
+      <div class="bal-card">
+        <div class="lbl">TOTAL BALANCE · ALL ACCOUNTS</div>
+        <div class="amt" id="bigBal">$0.00</div>
+        <span class="delta">▲ +$3,214.20 (6.4%) this month</span>
+        <button class="eye" id="eyeBtn" aria-label="Toggle balance">
+          <svg viewBox="0 0 24 24" id="eyeIcon"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="span4 reveal d1">
+      <div class="glass card stat">
+        <div class="top"><div class="ic g"><svg viewBox="0 0 24 24"><path d="M17 7l-9 9M8 7h9v9"/></svg></div></div>
+        <div class="v" id="income">$0</div>
+        <div class="t">Income · October</div>
+        <div class="m up">▲ 12.5% vs Sep</div>
+      </div>
+    </div>
+    <div class="span4 reveal d2">
+      <div class="glass card stat">
+        <div class="top"><div class="ic r"><svg viewBox="0 0 24 24"><path d="M7 17l9-9M16 17H7V8"/></svg></div></div>
+        <div class="v" id="expense">$0</div>
+        <div class="t">Expenses · October</div>
+        <div class="m dn">▼ 4.2% vs Sep</div>
+      </div>
+    </div>
+    <div class="span4 reveal d3">
+      <div class="glass card stat">
+        <div class="top"><div class="ic b"><svg viewBox="0 0 24 24"><path d="M19 5L5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></div></div>
+        <div class="v" id="saved">0%</div>
+        <div class="t">Savings rate</div>
+        <div class="m up">▲ on track for your goal</div>
+      </div>
+    </div>
+
+    <!-- chart -->
+    <div class="span8 reveal d2">
+      <div class="glass card chart-card">
+        <div class="chart-head">
+          <h3>Cash flow</h3>
+          <div class="legend"><span><i style="background:#6C7A89"></i>In</span><span><i style="background:#C4CDD8"></i>Out</span></div>
+        </div>
+        <canvas id="chart" height="260"></canvas>
+      </div>
+    </div>
+
+    <!-- cards -->
+    <div class="span4 reveal d3">
+      <div class="glass card">
+        <h3 style="margin-bottom:18px">My cards</h3>
+        <div class="vcard">
+          <div class="row"><b>Slate Everyday</b><div class="chip"></div></div>
+          <div class="num">4821 •••• •••• 6012</div>
+          <div class="row"><div class="meta">CARD HOLDER<b>ADA OKAFOR</b></div><div class="meta">EXPIRES<b>09/29</b></div></div>
+        </div>
+        <div class="vcard dark">
+          <div class="row"><b>Slate Private · Metal</b><div class="chip"></div></div>
+          <div class="num">7734 •••• •••• 2201</div>
+          <div class="row"><div class="meta">CARD HOLDER<b>ADA OKAFOR</b></div><div class="meta">EXPIRES<b>02/28</b></div></div>
+        </div>
+        <div class="freeze">
+          <span>Freeze Everyday card</span>
+          <button class="switch" id="freezeSwitch" aria-label="Freeze card"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- transactions -->
+    <div class="span8 reveal d3">
+      <div class="glass card list-card">
+        <div class="chart-head"><h3>Recent transactions</h3><a href="#" style="font-size:13px;color:var(--slate-dark);font-weight:600;text-decoration:none">View all →</a></div>
+        <div id="txList"></div>
+      </div>
+    </div>
+
+    <!-- goals -->
+    <div class="span4 reveal d4">
+      <div class="glass card">
+        <div class="chart-head"><h3>Savings pots</h3><a href="#" style="font-size:13px;color:var(--slate-dark);font-weight:600;text-decoration:none">+ New pot</a></div>
+        <div class="goal"><div class="row"><b>Lagos trip</b><span>$1,840 / $2,500</span></div><div class="bar"><i data-w="74%"></i></div></div>
+        <div class="goal"><div class="row"><b>Emergency fund</b><span>$6,200 / $10,000</span></div><div class="bar"><i data-w="62%"></i></div></div>
+        <div class="goal"><div class="row"><b>New MacBook</b><span>$1,150 / $1,800</span></div><div class="bar"><i data-w="64%"></i></div></div>
+        <div class="goal" style="margin-bottom:4px"><div class="row"><b>Home deposit</b><span>$12,400 / $40,000</span></div><div class="bar"><i data-w="31%"></i></div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ---------- entry loader ---------- */
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('dLoader').classList.add('hide'), 1900);
+});
+
+/* ---------- reveal on scroll ---------- */
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target);} }), {threshold:.12});
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* ---------- mobile sidebar ---------- */
+document.getElementById('burger').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
+
+/* ---------- count-ups ---------- */
+function count(el, target, prefix='$', suffix='', dur=1600, dec=2){
+  const t0 = performance.now();
+  const step = t => {
+    const p = Math.min((t - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3);
+    const v = target * e;
+    el.textContent = prefix + (dec ? v.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}) : Math.round(v).toLocaleString()) + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+count(document.getElementById('bigBal'), 48250.75);
+count(document.getElementById('income'), 9240);
+count(document.getElementById('expense'), 5120, '$', '', 1600, 0);
+count(document.getElementById('saved'), 38.4, '', '%', 1600, 1);
+
+/* ---------- hide balance toggle ---------- */
+let hidden = false;
+document.getElementById('eyeBtn').addEventListener('click', () => {
+  hidden = !hidden;
+  document.getElementById('bigBal').textContent = hidden ? '$ ••••••' : '$48,250.75';
+});
+
+/* ---------- freeze switch ---------- */
+document.getElementById('freezeSwitch').addEventListener('click', function(){ this.classList.toggle('on'); });
+
+/* ---------- transactions ---------- */
+const ICONS = {
+  cart:'<svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M3 3h2l2.6 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 7H6"/></svg>',
+  zap:'<svg viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>',
+  cafe:'<svg viewBox="0 0 24 24"><path d="M18 8h1a3 3 0 0 1 0 6h-1M4 8h14v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M8 2v2M12 2v2"/></svg>',
+  home:'<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
+  arrow:'<svg viewBox="0 0 24 24"><path d="M17 7l-9 9M8 7h9v9"/></svg>',
+  music:'<svg viewBox="0 0 24 24"><path d="M9 18V6l11-2v11"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="15" r="2.5"/></svg>'
+};
+const TX = [
+  {i:'arrow', c:'pos', bg:'rgba(94,156,123,.15)', sc:'var(--green)', n:'Salary — Northwind Studio', d:'Today · 09:12', a:'+$4,620.00', s:'Cleared'},
+  {i:'cart',  c:'neg', bg:'rgba(108,122,137,.15)', sc:'var(--slate)', n:'Whole Foods Market', d:'Today · 08:47', a:'-$86.20', s:'Card ····6012'},
+  {i:'zap',   c:'neg', bg:'rgba(108,122,137,.15)', sc:'var(--slate)', n:'Electricity — Eko Disco', d:'Yesterday', a:'-$54.00', s:'Autopay'},
+  {i:'cafe',  c:'neg', bg:'rgba(108,122,137,.15)', sc:'var(--slate)', n:'Café Neo, Victoria Island', d:'Yesterday', a:'-$12.40', s:'Card ····2201'},
+  {i:'home',  c:'neg', bg:'rgba(180,84,62,.12)',  sc:'var(--red)',   n:'Rent — Admiralty Way', d:'20 Oct', a:'-$1,200.00', s:'Scheduled'},
+  {i:'music', c:'neg', bg:'rgba(108,122,137,.15)', sc:'var(--slate)', n:'Spotify Premium', d:'19 Oct', a:'-$9.99', s:'Subscription'}
+];
+document.getElementById('txList').innerHTML = TX.map(t => `
+  <div class="tx">
+    <div class="tic" style="background:${t.bg}"><span style="stroke:${t.sc};display:contents">${ICONS[t.i].replace('<svg', '<svg style="stroke:'+t.sc+'"')}</span></div>
+    <div><b>${t.n}</b><span>${t.d}</span></div>
+    <div class="amt ${t.c}">${t.a}<small>${t.s}</small></div>
+  </div>`).join('');
+
+/* ---------- goals bars ---------- */
+setTimeout(() => document.querySelectorAll('.bar i').forEach(b => b.style.width = b.dataset.w), 500);
+
+/* ---------- cash-flow chart ---------- */
+const cv = document.getElementById('chart'), cx = cv.getContext('2d');
+const IN  = [6200, 7100, 5400, 8600, 7800, 9240, 6900, 8800, 7400, 9100, 8240, 9400];
+const OUT = [4800, 4200, 5100, 5600, 4900, 5120, 5300, 6100, 4700, 5800, 5200, 4900];
+const LABELS = ['Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'];
+
+function sizeCanvas(){
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = cv.offsetWidth * dpr; cv.height = 260 * dpr;
+  cx.setTransform(dpr,0,0,dpr,0,0);
+}
+function drawChart(p){
+  const W = cv.offsetWidth, H = 260, pad = {l:44, r:14, t:16, b:30};
+  cx.clearRect(0,0,W,H);
+  const max = 10000, min = 0;
+  const X = i => pad.l + (W - pad.l - pad.r) * (i / (IN.length - 1));
+  const Y = v => pad.t + (H - pad.t - pad.b) * (1 - (v - min) / (max - min));
+  // grid
+  cx.strokeStyle = 'rgba(108,122,137,.14)'; cx.lineWidth = 1;
+  cx.fillStyle = 'rgba(78,90,104,.55)'; cx.font = '11px Helvetica'; cx.textAlign = 'right';
+  for (let g = 0; g <= 4; g++){
+    const v = min + (max - min) * g / 4, y = Y(v);
+    cx.beginPath(); cx.moveTo(pad.l, y); cx.lineTo(W - pad.r, y); cx.stroke();
+    cx.fillText('$' + (v/1000) + 'k', pad.l - 8, y + 4);
+  }
+  cx.textAlign = 'center';
+  LABELS.forEach((l, i) => { if (i % 2 === 0) cx.fillText(l, X(i), H - 10); });
+  // reveal clip
+  const clipW = pad.l + (W - pad.l - pad.r) * p;
+  cx.save(); cx.beginPath(); cx.rect(0, 0, clipW, H); cx.clip();
+  const line = (data, color, fill) => {
+    cx.beginPath();
+    data.forEach((v, i) => i ? cx.lineTo(X(i), Y(v)) : cx.moveTo(X(0), Y(v)));
+    cx.strokeStyle = color; cx.lineWidth = 2.4; cx.lineJoin = 'round'; cx.stroke();
+    if (fill){
+      cx.lineTo(X(data.length-1), H - pad.b); cx.lineTo(X(0), H - pad.b); cx.closePath();
+      const g = cx.createLinearGradient(0, pad.t, 0, H - pad.b);
+      g.addColorStop(0, 'rgba(108,122,137,.28)'); g.addColorStop(1, 'rgba(108,122,137,0)');
+      cx.fillStyle = g; cx.fill();
+    }
+  };
+  line(OUT, '#C4CDD8', false);
+  line(IN, '#6C7A89', true);
+  // points on income
+  cx.fillStyle = '#fff'; cx.strokeStyle = '#6C7A89'; cx.lineWidth = 2;
+  IN.forEach((v, i) => { cx.beginPath(); cx.arc(X(i), Y(v), 3.6, 0, 7); cx.fill(); cx.stroke(); });
+  cx.restore();
+}
+function animateChart(){
+  sizeCanvas();
+  const t0 = performance.now(), dur = 1500;
+  const step = t => {
+    const p = Math.min((t - t0) / dur, 1);
+    drawChart(1 - Math.pow(1 - p, 3));
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+window.addEventListener('resize', () => drawChart(1));
+animateChart();
+</script>
+</body>
+</html>
